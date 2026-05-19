@@ -3,6 +3,32 @@
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
+#include <string_view>
+
+namespace{
+
+void WriteMetadataGitIgnore(const checkpoint::internal::RepositoryLayout& layout){
+    static constexpr std::string_view kGitIgnoreContents = "*\n";
+
+    const auto gitignore_path = layout.metadata_path / checkpoint::internal::kGitIgnoreFileName;
+    std::ofstream output(gitignore_path, std::ios::trunc);
+    if(!output){
+        throw std::runtime_error(checkpoint::internal::BuildRuntimeErrorMessage(
+            "Failed to create metadata .gitignore",
+            gitignore_path
+        ));
+    }
+
+    output << kGitIgnoreContents;
+    if(!output){
+        throw std::runtime_error(checkpoint::internal::BuildRuntimeErrorMessage(
+            "Failed to write metadata .gitignore",
+            gitignore_path
+        ));
+    }
+}
+
+}
 
 namespace checkpoint{
 
@@ -25,6 +51,7 @@ std::filesystem::path init_repository(const std::filesystem::path& root_path){
 
     auto layout = internal::BuildRepositoryLayout(root_path);
     internal::EnsureMetadataDirectories(layout);
+    WriteMetadataGitIgnore(layout);
 
     if(!std::filesystem::exists(layout.head_path)){
         std::ofstream output(layout.head_path, std::ios::app);

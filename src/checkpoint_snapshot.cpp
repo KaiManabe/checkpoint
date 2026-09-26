@@ -500,7 +500,9 @@ void RestoreFiles(const RepositoryLayout& layout, const SnapshotManifest& manife
 
         ec.clear();
         const auto file_status = std::filesystem::symlink_status(file_path, ec);
-        if(ec){
+        const bool restore_target_is_missing =
+            ec == std::errc::no_such_file_or_directory;
+        if(ec && !restore_target_is_missing){
             throw std::runtime_error(BuildRuntimeErrorMessage(
                 "Failed to inspect restore target before overwriting",
                 file_path,
@@ -508,7 +510,8 @@ void RestoreFiles(const RepositoryLayout& layout, const SnapshotManifest& manife
             ));
         }
 
-        if(std::filesystem::exists(file_status)
+        if(!restore_target_is_missing
+            && std::filesystem::exists(file_status)
             && (file_status.permissions() & std::filesystem::perms::owner_write)
                 == std::filesystem::perms::none){
             std::cout << "Ignoring: " << file.relative_path << std::endl;

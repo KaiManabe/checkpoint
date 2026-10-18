@@ -1,8 +1,11 @@
 #include "checkpoint_internal.hpp"
 
+#include <charconv>
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
+#include <string>
+#include <unordered_set>
 
 namespace checkpoint{
 
@@ -55,6 +58,67 @@ std::filesystem::path create_snapshot(const std::string& id){
     internal::EnsureMetadataDirectories(layout);
     internal::CreateSnapshotInLayout(layout, id);
     return layout.root_path;
+}
+
+
+/**
+ * @brief @n形式の相対参照を対応するチェックポイントIDへ解決する
+ *
+ * @param reference チェックポイントIDまたは相対参照
+ * @return std::string 解決後のチェックポイントID
+ */
+std::string resolve_snapshot_reference(const std::string& reference){
+    if(reference.find('@') == std::string::npos){
+        return reference;
+    }
+
+    if(reference.size() < 2 || reference.front() != '@'){
+        throw std::invalid_argument("Invalid relative reference: " + reference);
+    }
+
+    std::size_t relative_number = 0;
+    const auto number_begin = reference.data() + 1;
+    const auto number_end = reference.data() + reference.size();
+    const auto parse_result = std::from_chars(
+        number_begin,
+        number_end,
+        relative_number
+    );
+    if(parse_result.ec != std::errc()
+        || parse_result.ptr != number_end
+        || relative_number == 0){
+        throw std::invalid_argument("Invalid relative reference: " + reference);
+    }
+
+    const auto layout = internal::DiscoverRepository(std::filesystem::current_path());
+    auto current_id = internal::ReadHead(layout);
+    std::unordered_set<std::string> visited_ids;
+
+    for(std::size_t current_number = 1; current_number < relative_number; ++current_number){
+        if(current_id.empty()){
+            throw std::invalid_argument("Relative reference is out of range: " + reference);
+        }
+        if(!visited_ids.insert(current_id).second){
+            throw std::runtime_error(
+                "Cycle detected in checkpoint history: " + current_id
+            );
+        }
+
+        const auto manifest = internal::LoadSnapshotManifest(layout, current_id);
+        current_id = manifest.parent_id;
+    }
+
+    if(current_id.empty()){
+        throw std::invalid_argument("Relative reference is out of range: " + reference);
+    }
+    if(!visited_ids.insert(current_id).second){
+        throw std::runtime_error(
+            "Cycle detected in checkpoint history: " + current_id
+        );
+    }
+
+    internal::LoadSnapshotManifest(layout, current_id);
+    return current_id;
 }
 
 

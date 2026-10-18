@@ -198,13 +198,15 @@ int main(int argc, char **argv){
             
         case arguments::kRestore:{
             auto mode_args = arguments::parse_mode_args<arguments::RestoreArguments>(args);
+            const auto target_id = checkpoint::resolve_snapshot_reference(mode_args.id);
             const auto backup_id = CreateRestoreBackupSnapshot();
             std::cout << "Backup snapshot: " << backup_id << std::endl;
-            auto repository_root = checkpoint::restore_snapshot(mode_args.id);
-            std::cout
-                << "Restored snap " << mode_args.id
-                << " in " << repository_root
-                << std::endl;
+            auto repository_root = checkpoint::restore_snapshot(target_id);
+            std::cout << "Restored snap " << mode_args.id;
+            if(target_id != mode_args.id){
+                std::cout << " (" << target_id << ")";
+            }
+            std::cout << " in " << repository_root << std::endl;
             break;
         }
 

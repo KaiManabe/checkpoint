@@ -37,6 +37,8 @@ namespace checkpoint{
 
     std::filesystem::path create_snapshot(const std::string& id);
 
+    std::string resolve_snapshot_reference(const std::string& reference);
+
     std::filesystem::path restore_snapshot(const std::string& id);
 
     std::vector<SnapshotLogEntry> get_snapshot_log(std::size_t max_count);

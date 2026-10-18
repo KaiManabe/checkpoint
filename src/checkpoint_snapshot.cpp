@@ -337,6 +337,10 @@ SnapshotManifest LoadSnapshotManifest(const RepositoryLayout& layout, const std:
  * @param id 作成対象のスナップショットID
  */
 void CreateSnapshotInLayout(const RepositoryLayout& layout, const std::string& id){
+    if(id.find('@') != std::string::npos){
+        throw std::invalid_argument("Checkpoint id cannot contain '@'");
+    }
+
     const auto snapshot_path = BuildSnapshotPath(layout, id);
     if(std::filesystem::exists(snapshot_path)){
         const auto existing_manifest = LoadSnapshotManifest(snapshot_path);

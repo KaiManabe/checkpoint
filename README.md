@@ -73,8 +73,11 @@ checkpoint snap my_snapshot
 ### 復元
 ```bash
 checkpoint restore my_snapshot
+checkpoint restore @1
 ```
 - 現在の状態でスナップショットを作成してから，指定したスナップショットの状態に復元します
+- `@1`は直近，`@2`はその1つ前というように，`@n`で相対的に復元対象を指定できます
+- `@`は相対参照用の文字であるため，スナップショットidには使用できません
 
 
 ### ログ表示

@@ -1,10 +1,9 @@
 #include "checkpoint_internal.hpp"
 
+#include <algorithm>
 #include <filesystem>
 #include <map>
-#include <stdexcept>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 namespace checkpoint{
@@ -70,7 +69,7 @@ SnapshotLogEntry BuildLogEntry(
 
 
 /**
- * @brief HEADから親方向へスナップショットログを取得する
+ * @brief 作成履歴から新しい順にスナップショットログを取得する
  *
  * @param max_count 取得する最大件数
  * @return std::vector<SnapshotLogEntry> 新しい順のログ項目
@@ -78,17 +77,11 @@ SnapshotLogEntry BuildLogEntry(
 std::vector<SnapshotLogEntry> get_snapshot_log(std::size_t max_count){
     const auto layout = internal::DiscoverRepository(std::filesystem::current_path());
     std::vector<SnapshotLogEntry> entries;
+    const auto history = internal::ReadSnapshotHistory(layout);
+    const auto entry_count = std::min(max_count, history.size());
 
-    auto current_id = internal::ReadHead(layout);
-    std::unordered_set<std::string> visited_ids;
-
-    while(!current_id.empty() && entries.size() < max_count){
-        if(!visited_ids.insert(current_id).second){
-            throw std::runtime_error(
-                "Cycle detected in checkpoint history: " + current_id
-            );
-        }
-
+    for(std::size_t i = 0; i < entry_count; ++i){
+        const auto& current_id = history[history.size() - 1 - i];
         const auto current = internal::LoadSnapshotManifest(layout, current_id);
         internal::SnapshotManifest parent;
         if(!current.parent_id.empty()){
@@ -96,7 +89,6 @@ std::vector<SnapshotLogEntry> get_snapshot_log(std::size_t max_count){
         }
 
         entries.push_back(BuildLogEntry(layout, current, parent));
-        current_id = current.parent_id;
     }
 
     return entries;

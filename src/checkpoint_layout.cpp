@@ -8,8 +8,63 @@
 #include <stdexcept>
 #include <string>
 #include <system_error>
+#include <unordered_set>
 
 namespace checkpoint::internal{
+
+namespace{
+
+/**
+ * @brief スナップショット作成履歴を読み込める場合だけ結果を返す
+ *
+ * @param layout リポジトリ構成
+ * @param history 読み込んだスナップショットIDの格納先
+ * @return true 履歴全体を正常に読み込めた場合
+ * @return false 履歴が存在しない、または正常に読み込めない場合
+ */
+bool TryReadSnapshotHistory(
+    const RepositoryLayout& layout,
+    std::vector<std::string>& history
+){
+    history.clear();
+
+    std::ifstream input(layout.history_path);
+    if(!input){
+        return false;
+    }
+
+    std::unordered_set<std::string> seen_ids;
+    std::string line;
+
+    while(std::getline(input, line)){
+        if(line.empty()){
+            continue;
+        }
+
+        std::istringstream iss(line);
+        std::string id;
+        iss >> std::quoted(id) >> std::ws;
+        if(iss.fail() || !iss.eof() || id.empty()){
+            history.clear();
+            return false;
+        }
+
+        if(!seen_ids.insert(id).second){
+            history.clear();
+            return false;
+        }
+        history.push_back(id);
+    }
+
+    if(!input.eof()){
+        history.clear();
+        return false;
+    }
+
+    return true;
+}
+
+}
 
 /**
  * @brief 与えられたパスを正規化した絶対パスへ変換する
@@ -50,6 +105,7 @@ RepositoryLayout BuildRepositoryLayout(const std::filesystem::path& root_path){
     layout.snapshots_path = layout.metadata_path / kSnapshotsDirectoryName;
     layout.objects_path = layout.metadata_path / kObjectsDirectoryName;
     layout.head_path = layout.metadata_path / kHeadFileName;
+    layout.history_path = layout.metadata_path / kHistoryFileName;
     return layout;
 }
 
@@ -201,6 +257,67 @@ void WriteHead(const RepositoryLayout& layout, const std::string& id){
     }
 
     output << id << '\n';
+}
+
+
+/**
+ * @brief 読み込めないスナップショット作成履歴を空の状態へ初期化する
+ *
+ * @param layout リポジトリ構成
+ */
+void InitializeSnapshotHistory(const RepositoryLayout& layout){
+    std::vector<std::string> history;
+    if(TryReadSnapshotHistory(layout, history)){
+        return;
+    }
+
+    std::ofstream output(layout.history_path, std::ios::trunc);
+    if(!output){
+        throw std::runtime_error(BuildRuntimeErrorMessage(
+            "Failed to reset snapshot history",
+            layout.history_path
+        ));
+    }
+}
+
+
+/**
+ * @brief スナップショットIDを作成順に読み込む
+ *
+ * @param layout リポジトリ構成
+ * @return std::vector<std::string> 古い順のスナップショットID。読み込めない場合は空
+ */
+std::vector<std::string> ReadSnapshotHistory(const RepositoryLayout& layout){
+    std::vector<std::string> history;
+    if(!TryReadSnapshotHistory(layout, history)){
+        history.clear();
+    }
+    return history;
+}
+
+
+/**
+ * @brief スナップショットIDを作成履歴の末尾へ追加する
+ *
+ * @param layout リポジトリ構成
+ * @param id 追加するスナップショットID
+ */
+void AppendSnapshotHistory(const RepositoryLayout& layout, const std::string& id){
+    std::ofstream output(layout.history_path, std::ios::app);
+    if(!output){
+        throw std::runtime_error(BuildRuntimeErrorMessage(
+            "Failed to open snapshot history for appending",
+            layout.history_path
+        ));
+    }
+
+    output << std::quoted(id) << '\n';
+    if(!output){
+        throw std::runtime_error(BuildRuntimeErrorMessage(
+            "Failed to append snapshot history",
+            layout.history_path
+        ));
+    }
 }
 
 

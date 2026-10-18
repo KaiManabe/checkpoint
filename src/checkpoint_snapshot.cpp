@@ -341,6 +341,8 @@ void CreateSnapshotInLayout(const RepositoryLayout& layout, const std::string& i
         throw std::invalid_argument("Checkpoint id cannot contain '@'");
     }
 
+    InitializeSnapshotHistory(layout);
+
     const auto snapshot_path = BuildSnapshotPath(layout, id);
     if(std::filesystem::exists(snapshot_path)){
         const auto existing_manifest = LoadSnapshotManifest(snapshot_path);
@@ -361,6 +363,7 @@ void CreateSnapshotInLayout(const RepositoryLayout& layout, const std::string& i
 
     const auto manifest = CaptureSnapshot(layout, id);
     SaveSnapshotManifest(layout, manifest);
+    AppendSnapshotHistory(layout, id);
     WriteHead(layout, id);
 }
 

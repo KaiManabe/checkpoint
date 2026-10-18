@@ -5,7 +5,6 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
-#include <unordered_set>
 
 namespace checkpoint{
 
@@ -28,6 +27,7 @@ std::filesystem::path init_repository(const std::filesystem::path& root_path){
 
     auto layout = internal::BuildRepositoryLayout(root_path);
     internal::EnsureMetadataDirectories(layout);
+    internal::InitializeSnapshotHistory(layout);
 
     if(!std::filesystem::exists(layout.head_path)){
         std::ofstream output(layout.head_path, std::ios::app);
@@ -62,7 +62,7 @@ std::filesystem::path create_snapshot(const std::string& id){
 
 
 /**
- * @brief @n形式の相対参照を対応するチェックポイントIDへ解決する
+ * @brief @n形式の作成順参照を対応するチェックポイントIDへ解決する
  *
  * @param reference チェックポイントIDまたは相対参照
  * @return std::string 解決後のチェックポイントID
@@ -91,34 +91,14 @@ std::string resolve_snapshot_reference(const std::string& reference){
     }
 
     const auto layout = internal::DiscoverRepository(std::filesystem::current_path());
-    auto current_id = internal::ReadHead(layout);
-    std::unordered_set<std::string> visited_ids;
-
-    for(std::size_t current_number = 1; current_number < relative_number; ++current_number){
-        if(current_id.empty()){
-            throw std::invalid_argument("Relative reference is out of range: " + reference);
-        }
-        if(!visited_ids.insert(current_id).second){
-            throw std::runtime_error(
-                "Cycle detected in checkpoint history: " + current_id
-            );
-        }
-
-        const auto manifest = internal::LoadSnapshotManifest(layout, current_id);
-        current_id = manifest.parent_id;
-    }
-
-    if(current_id.empty()){
+    const auto history = internal::ReadSnapshotHistory(layout);
+    if(relative_number > history.size()){
         throw std::invalid_argument("Relative reference is out of range: " + reference);
     }
-    if(!visited_ids.insert(current_id).second){
-        throw std::runtime_error(
-            "Cycle detected in checkpoint history: " + current_id
-        );
-    }
 
-    internal::LoadSnapshotManifest(layout, current_id);
-    return current_id;
+    const auto& resolved_id = history[history.size() - relative_number];
+    internal::LoadSnapshotManifest(layout, resolved_id);
+    return resolved_id;
 }
 
 

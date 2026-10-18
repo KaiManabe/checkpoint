@@ -11,6 +11,7 @@ add_executable(checkpoint
     src/checkpoint_hash.cpp
     src/checkpoint_ignore.cpp
     src/checkpoint_layout.cpp
+    src/checkpoint_log.cpp
     src/checkpoint_repository.cpp
     src/checkpoint_snapshot.cpp
     src/main.cpp

@@ -77,6 +77,18 @@ checkpoint restore my_snapshot
 - 現在の状態でスナップショットを作成してから，指定したスナップショットの状態に復元します
 
 
+### ログ表示
+```bash
+checkpoint log
+checkpoint log --short
+checkpoint log -s
+checkpoint log -n 10
+```
+- 現在のスナップショットから過去のログを新しい順に表示します
+- デフォルトでは5件を表示し，`-n`で表示件数を指定できます
+- `--short`または`-s`を指定すると短縮形式で表示します
+
+
 ## 除外対象
 - あらゆる階層にある`.checkpoint`ディレクトリ
 - あらゆる階層にある`.git`ディレクトリ

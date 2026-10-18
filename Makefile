@@ -19,6 +19,7 @@ SOURCES := \
 	$(SRCDIR)/checkpoint_hash.cpp \
 	$(SRCDIR)/checkpoint_ignore.cpp \
 	$(SRCDIR)/checkpoint_layout.cpp \
+	$(SRCDIR)/checkpoint_log.cpp \
 	$(SRCDIR)/checkpoint_repository.cpp \
 	$(SRCDIR)/checkpoint_snapshot.cpp \
 	$(SRCDIR)/main.cpp

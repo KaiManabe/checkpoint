@@ -106,6 +106,7 @@ RepositoryLayout BuildRepositoryLayout(const std::filesystem::path& root_path){
     layout.objects_path = layout.metadata_path / kObjectsDirectoryName;
     layout.head_path = layout.metadata_path / kHeadFileName;
     layout.history_path = layout.metadata_path / kHistoryFileName;
+    layout.version_path = layout.metadata_path / kVersionFileName;
     return layout;
 }
 

@@ -62,6 +62,8 @@ Arguments parse_cli_args(int argv, char **argc){
         args.mode = kRestore;
     }else if(mode == "log"){
         args.mode = kLog;
+    }else if(mode == "-v" || mode == "--version"){
+        args.mode = kVersion;
     }else{
         std::ostringstream oss;
         oss << "Unknown argument: mode (" << mode << ")";
@@ -203,6 +205,22 @@ LogArguments parse_mode_args<LogArguments>(Arguments args){
     }
 
     return ret;
+}
+
+
+/**
+ * @brief argcから生成されたArguments構造体をkVersionモードの引数として解釈する
+ *
+ * @param args Arguments構造体
+ * @return VersionArguments 解釈された引数
+ */
+template <>
+VersionArguments parse_mode_args<VersionArguments>(Arguments args){
+    if(!args.args.empty()){
+        throw std::invalid_argument("Too many arguments for version mode");
+    }
+
+    return VersionArguments{};
 }
 
 

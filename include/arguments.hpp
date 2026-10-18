@@ -22,6 +22,7 @@ namespace arguments{
         kCheckpoint,
         kRestore,
         kLog,
+        kVersion,
     };
 
     struct Arguments{
@@ -46,6 +47,8 @@ namespace arguments{
         std::size_t count = 5;
     };
 
+    struct VersionArguments{};
+
     /* ---------------------------------------------------------
      ヘルパー関数
     --------------------------------------------------------- */
@@ -67,6 +70,9 @@ namespace arguments{
 
     template <>
     LogArguments parse_mode_args<LogArguments>(Arguments args);
+
+    template <>
+    VersionArguments parse_mode_args<VersionArguments>(Arguments args);
 
 }
 

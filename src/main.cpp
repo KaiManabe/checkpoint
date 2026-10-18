@@ -1,5 +1,6 @@
 #include "arguments.hpp"
 #include "checkpoint_repository.hpp"
+#include "version.hpp"
 
 #include <algorithm>
 #include <ctime>
@@ -174,7 +175,8 @@ void PrintUsage(const char* path) {
         << path << " snap\n"
         << path << " snap my_snapshot_name\n"
         << path << " restore my_snapshot_name\n"
-        << path << " log [-s|--short] [-n count]\n";
+        << path << " log [-s|--short] [-n count]\n"
+        << path << " -v | --version\n";
 }
 
 
@@ -218,6 +220,14 @@ int main(int argc, char **argv){
             }else{
                 PrintLongLog(entries);
             }
+            break;
+        }
+
+        case arguments::kVersion:{
+            arguments::parse_mode_args<arguments::VersionArguments>(args);
+            std::cout
+                << CHECKPOINT_VERSION_MESSAGE
+                << '\n';
             break;
         }
             

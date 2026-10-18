@@ -53,6 +53,7 @@ namespace checkpoint::internal{
         std::filesystem::path objects_path;
         std::filesystem::path head_path;
         std::filesystem::path history_path;
+        std::filesystem::path version_path;
     };
 
     struct GitIgnoreRule{

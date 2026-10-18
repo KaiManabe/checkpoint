@@ -15,6 +15,7 @@ namespace checkpoint{
     constexpr static std::string kObjectsDirectoryName = "objects";
     constexpr static std::string kHeadFileName = "HEAD";
     constexpr static std::string kHistoryFileName = "HISTORY";
+    constexpr static std::string kVersionFileName = "VERSION";
 
 
 

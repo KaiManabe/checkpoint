@@ -36,6 +36,10 @@ $(TARGET): $(OBJECTS) | $(OUTDIR)
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+$(OBJDIR)/checkpoint_repository.o: include/version.hpp
+
+$(OBJDIR)/main.o: include/version.hpp
+
 $(OUTDIR):
 	mkdir -p $(OUTDIR)
 

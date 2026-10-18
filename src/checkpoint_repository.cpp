@@ -1,4 +1,5 @@
 #include "checkpoint_internal.hpp"
+#include "version.hpp"
 
 #include <charconv>
 #include <filesystem>
@@ -7,6 +8,33 @@
 #include <string>
 
 namespace checkpoint{
+
+namespace{
+
+/**
+ * @brief 初期化に使用したプログラムのビルドバージョンを保存する
+ *
+ * @param layout リポジトリ構成
+ */
+void WriteRepositoryVersion(const internal::RepositoryLayout& layout){
+    std::ofstream output(layout.version_path, std::ios::trunc);
+    if(!output){
+        throw std::runtime_error(internal::BuildRuntimeErrorMessage(
+            "Failed to create repository version file",
+            layout.version_path
+        ));
+    }
+
+    output << CHECKPOINT_VERSION_STRING << '\n';
+    if(!output){
+        throw std::runtime_error(internal::BuildRuntimeErrorMessage(
+            "Failed to write repository version",
+            layout.version_path
+        ));
+    }
+}
+
+}
 
 /**
  * @brief チェックポイント管理用ディレクトリを初期化する
@@ -27,6 +55,7 @@ std::filesystem::path init_repository(const std::filesystem::path& root_path){
 
     auto layout = internal::BuildRepositoryLayout(root_path);
     internal::EnsureMetadataDirectories(layout);
+    WriteRepositoryVersion(layout);
     internal::InitializeSnapshotHistory(layout);
 
     if(!std::filesystem::exists(layout.head_path)){

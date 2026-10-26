@@ -1,6 +1,7 @@
 #ifndef _ARGUMENTS_HPP_
 #define _ARGUMENTS_HPP_
 
+#include <cstddef>
 #include <string>
 #include <filesystem>
 #include <vector>
@@ -20,6 +21,8 @@ namespace arguments{
         kInit,
         kCheckpoint,
         kRestore,
+        kLog,
+        kVersion,
     };
 
     struct Arguments{
@@ -39,6 +42,13 @@ namespace arguments{
         std::string id;
     };
 
+    struct LogArguments{
+        bool short_format = false;
+        std::size_t count = 5;
+    };
+
+    struct VersionArguments{};
+
     /* ---------------------------------------------------------
      ヘルパー関数
     --------------------------------------------------------- */
@@ -57,6 +67,12 @@ namespace arguments{
 
     template <>
     RestoreArguments parse_mode_args<RestoreArguments>(Arguments args);
+
+    template <>
+    LogArguments parse_mode_args<LogArguments>(Arguments args);
+
+    template <>
+    VersionArguments parse_mode_args<VersionArguments>(Arguments args);
 
 }
 

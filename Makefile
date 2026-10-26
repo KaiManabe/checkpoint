@@ -19,6 +19,7 @@ SOURCES := \
 	$(SRCDIR)/checkpoint_hash.cpp \
 	$(SRCDIR)/checkpoint_ignore.cpp \
 	$(SRCDIR)/checkpoint_layout.cpp \
+	$(SRCDIR)/checkpoint_log.cpp \
 	$(SRCDIR)/checkpoint_repository.cpp \
 	$(SRCDIR)/checkpoint_snapshot.cpp \
 	$(SRCDIR)/main.cpp
@@ -34,6 +35,10 @@ $(TARGET): $(OBJECTS) | $(OUTDIR)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/checkpoint_repository.o: include/version.hpp
+
+$(OBJDIR)/main.o: include/version.hpp
 
 $(OUTDIR):
 	mkdir -p $(OUTDIR)

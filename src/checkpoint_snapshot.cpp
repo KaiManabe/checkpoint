@@ -337,6 +337,12 @@ SnapshotManifest LoadSnapshotManifest(const RepositoryLayout& layout, const std:
  * @param id 作成対象のスナップショットID
  */
 void CreateSnapshotInLayout(const RepositoryLayout& layout, const std::string& id){
+    if(id.find('@') != std::string::npos){
+        throw std::invalid_argument("Checkpoint id cannot contain '@'");
+    }
+
+    InitializeSnapshotHistory(layout);
+
     const auto snapshot_path = BuildSnapshotPath(layout, id);
     if(std::filesystem::exists(snapshot_path)){
         const auto existing_manifest = LoadSnapshotManifest(snapshot_path);
@@ -357,6 +363,7 @@ void CreateSnapshotInLayout(const RepositoryLayout& layout, const std::string& i
 
     const auto manifest = CaptureSnapshot(layout, id);
     SaveSnapshotManifest(layout, manifest);
+    AppendSnapshotHistory(layout, id);
     WriteHead(layout, id);
 }
 
@@ -500,7 +507,9 @@ void RestoreFiles(const RepositoryLayout& layout, const SnapshotManifest& manife
 
         ec.clear();
         const auto file_status = std::filesystem::symlink_status(file_path, ec);
-        if(ec){
+        const bool restore_target_is_missing =
+            ec == std::errc::no_such_file_or_directory;
+        if(ec && !restore_target_is_missing){
             throw std::runtime_error(BuildRuntimeErrorMessage(
                 "Failed to inspect restore target before overwriting",
                 file_path,
@@ -508,7 +517,8 @@ void RestoreFiles(const RepositoryLayout& layout, const SnapshotManifest& manife
             ));
         }
 
-        if(std::filesystem::exists(file_status)
+        if(!restore_target_is_missing
+            && std::filesystem::exists(file_status)
             && (file_status.permissions() & std::filesystem::perms::owner_write)
                 == std::filesystem::perms::none){
             std::cout << "Ignoring: " << file.relative_path << std::endl;

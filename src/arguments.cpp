@@ -1,6 +1,7 @@
 #include "arguments.hpp"
 
 #include <array>
+#include <charconv>
 #include <random>
 #include <sstream>
 #include <stdexcept>
@@ -59,6 +60,10 @@ Arguments parse_cli_args(int argv, char **argc){
         args.mode = kCheckpoint;
     }else if(mode == "restore"){
         args.mode = kRestore;
+    }else if(mode == "log"){
+        args.mode = kLog;
+    }else if(mode == "-v" || mode == "--version"){
+        args.mode = kVersion;
     }else{
         std::ostringstream oss;
         oss << "Unknown argument: mode (" << mode << ")";
@@ -153,6 +158,69 @@ RestoreArguments parse_mode_args<RestoreArguments>(Arguments args){
     // ----------- チェックポイントIDを指定 -----------
     ret.id = args.args[0];
     return ret;
+}
+
+
+/**
+ * @brief argcから生成されたArguments構造体をkLogモードの引数として解釈する
+ *
+ * @param args Arguments構造体
+ * @return LogArguments 解釈された引数
+ */
+template <>
+LogArguments parse_mode_args<LogArguments>(Arguments args){
+    LogArguments ret;
+
+    for(std::size_t i = 0; i < args.args.size(); ++i){
+        const auto& arg = args.args[i];
+
+        if(arg == "--short" || arg == "-s"){
+            ret.short_format = true;
+            continue;
+        }
+
+        if(arg == "-n"){
+            if(i + 1 >= args.args.size()){
+                throw std::invalid_argument("Missing value for log option: -n");
+            }
+
+            const auto& value = args.args[++i];
+            std::size_t parsed_count = 0;
+            const auto result = std::from_chars(
+                value.data(),
+                value.data() + value.size(),
+                parsed_count
+            );
+            if(value.empty()
+                || result.ec != std::errc()
+                || result.ptr != value.data() + value.size()){
+                throw std::invalid_argument("Invalid value for log option -n: " + value);
+            }
+
+            ret.count = parsed_count;
+            continue;
+        }
+
+        throw std::invalid_argument("Unknown argument for log mode: " + arg);
+    }
+
+    return ret;
+}
+
+
+/**
+ * @brief argcから生成されたArguments構造体をkVersionモードの引数として解釈する
+ *
+ * @param args Arguments構造体
+ * @return VersionArguments 解釈された引数
+ */
+template <>
+VersionArguments parse_mode_args<VersionArguments>(Arguments args){
+    if(!args.args.empty()){
+        throw std::invalid_argument("Too many arguments for version mode");
+    }
+
+    return VersionArguments{};
 }
 
 

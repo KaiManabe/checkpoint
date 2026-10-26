@@ -73,8 +73,22 @@ checkpoint snap my_snapshot
 ### 復元
 ```bash
 checkpoint restore my_snapshot
+checkpoint restore @1
 ```
 - 現在の状態でスナップショットを作成してから，指定したスナップショットの状態に復元します
+- `@1`は直前に作成，`@2`はその前に作成されたスナップショットを参照します
+
+
+### ログ表示
+```bash
+checkpoint log
+checkpoint log --short
+checkpoint log -s
+checkpoint log -n 10
+```
+- 作成されたすべてのスナップショットを新しい順に表示します
+- デフォルトでは5件を表示し，`-n`で表示件数を指定できます
+- `--short`または`-s`を指定すると短縮形式で表示します
 
 
 ## 除外対象

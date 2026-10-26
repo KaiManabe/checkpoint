@@ -52,6 +52,8 @@ namespace checkpoint::internal{
         std::filesystem::path snapshots_path;
         std::filesystem::path objects_path;
         std::filesystem::path head_path;
+        std::filesystem::path history_path;
+        std::filesystem::path version_path;
     };
 
     struct GitIgnoreRule{
@@ -155,6 +157,12 @@ namespace checkpoint::internal{
     std::string ReadHead(const RepositoryLayout& layout);
 
     void WriteHead(const RepositoryLayout& layout, const std::string& id);
+
+    void InitializeSnapshotHistory(const RepositoryLayout& layout);
+
+    std::vector<std::string> ReadSnapshotHistory(const RepositoryLayout& layout);
+
+    void AppendSnapshotHistory(const RepositoryLayout& layout, const std::string& id);
 
     std::string FormatTimestamp();
 

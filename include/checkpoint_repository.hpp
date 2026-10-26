@@ -1,8 +1,10 @@
 #ifndef _CHECKPOINT_REPOSITORY_HPP_
 #define _CHECKPOINT_REPOSITORY_HPP_
 
+#include <cstddef>
 #include <filesystem>
 #include <string>
+#include <vector>
 
 namespace checkpoint{
     /* ---------------------------------------------------------
@@ -12,6 +14,21 @@ namespace checkpoint{
     constexpr static std::string kSnapshotsDirectoryName = "snapshots";
     constexpr static std::string kObjectsDirectoryName = "objects";
     constexpr static std::string kHeadFileName = "HEAD";
+    constexpr static std::string kHistoryFileName = "HISTORY";
+    constexpr static std::string kVersionFileName = "VERSION";
+
+
+
+    /* ---------------------------------------------------------
+     型定義
+    --------------------------------------------------------- */
+    struct SnapshotLogEntry{
+        std::string id;
+        std::string created_at;
+        std::vector<std::filesystem::path> new_files;
+        std::vector<std::filesystem::path> modified_files;
+        std::vector<std::filesystem::path> deleted_files;
+    };
 
 
 
@@ -22,7 +39,11 @@ namespace checkpoint{
 
     std::filesystem::path create_snapshot(const std::string& id);
 
+    std::string resolve_snapshot_reference(const std::string& reference);
+
     std::filesystem::path restore_snapshot(const std::string& id);
+
+    std::vector<SnapshotLogEntry> get_snapshot_log(std::size_t max_count);
 }
 
 #endif
